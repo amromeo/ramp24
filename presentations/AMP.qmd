@@ -1,0 +1,676 @@
+---
+title: "AMP 2024 Course"
+author: "Amir Momeni"
+format: revealjs
+editor: visual
+---
+
+## Introduction to test validation
+
+Regulatory bodies such as Clinical Laboratory Improvement Amendments (CLIA), College of American Pathologists (CAP) and some states regulatory bodies (e.g. New York state) require laboratories to validate each new test that they add to their repertoire.
+
+The term 'Method evaluation' is used to describe the process of validating a new test. This process requires three elements:
+
+-   Test assessment
+
+-   Test validation
+
+-   Test verification
+
+We are going to focus on test validation and go over some of the ways R can be useful in the process of test validation.
+
+## Defining analytical goals
+
+The purpose of a test is to diagnose a condition or assess an analyte with acceptable accuracy and precision. The process of validation starts with setting analytical goals also known as setting the '**Acceptability Criteria**'.
+
+The acceptability criteria should state clear goals for levels of accuracy and precision. Accuracy and precision goals are defined differently for qualitative and quantitative tests. For quantitative tests, the criteria should also include reportable range and reference intervals.
+
+**Required performance characteristics with suggested studies needed before implementation of FDA-approved/cleared tests and laboratory-developed tests**
+
+-   **Reportable Range; linearity study for quantitative assays**
+
+-   **Analytical sensitivity; limit of detection study**
+
+-   **Precision; replication experiment**
+
+-   Analytical specificity; interference study
+
+-   **Accuracy; comparison of methods study**
+
+-   **Reference interval**
+
+#### 
+
+### Acceptability criteria for qualitative tests:
+
+Qualitative tests usually return a binary response (e.g. detected vs. not detected or positive vs. negative), or rarely they can have more than two categorical responses.
+
+|               |                     |                     |
+|---------------|---------------------|---------------------|
+|               | Condition Positive  | Condition Negative  |
+| Test Positive | True Positive (TP)  | False Positive (FP) |
+| Test Negative | False Negative (FN) | True Negative (TN)  |
+
+: Contingency Table for Qualitative Tests
+
+#### Common Acceptability Criteria
+
+1 - Accuracy: How true is the result of the test when compared to the condition status of the test subjects.
+
+$Accuracy = TP + TN / TP + TN + FP + FN$
+
+2- Diagnostic Sensitivity: The proportion of the test subjects with the target condition whose test result is positive.
+
+$Sen= TP / TP + FN$
+
+3- Diagnostic Specificity: The proportion of individuals without the target condition who test negative
+
+$Spe = TN / TN + FP$
+
+Let's look at some examples:
+
+```{r}
+
+#Read the database with the data
+
+EGFR <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Accuracy Data.csv", header = TRUE) #the read.csv() function requires the address of the .csv file as it's first input. header (TRUE or FALSE) determines whether the columns have a header. ## <- use the arrow to assign a value to a variable. Here the variable is a table called EGFR.
+
+#Display the top rows
+head(EGFR) #the head() function shows the top few lines of a dataframe
+```
+
+The data of our test (PCR) and our gold standard (NGS) are presented in two different columns. Lets first change this into a contingency table so that we can have a visual inspection of the accuracy metrics.
+
+```{r}
+# Create contingency table
+contingency_table <- table(EGFR$PCR_Explore_Final, EGFR$NGS_Final.Mutation) # to refer to any variable within a dataframe we use the $ sign. The first variable is the rows and the second variable is the columns. 
+
+# Display the table
+print(contingency_table)
+```
+
+As you can see our TP number is 193 and our TN number is 489 with small FP and FN numbers. This suggests a high accuracy. Now, let's calculate the accuracy metrics:
+
+```{r}
+# Assign values from contingency table
+TP <- contingency_table["Mutated", "Mutated"]       # True Positives
+TN <- contingency_table["No Mutation Detected", "No Mutation Detected"] # True Negatives
+FP <- contingency_table["No Mutation Detected", "Mutated"]  # False Positives
+FN <- contingency_table["Mutated", "No Mutation Detected"]  # False Negatives
+
+# Calculate metrics
+accuracy <- (TP + TN) / sum(contingency_table)
+sensitivity <- TP / (TP + FN)
+specificity <- TN / (TN + FP)
+
+# Display results
+list(accuracy = accuracy, sensitivity = sensitivity, specificity = specificity)
+```
+
+#### Visualizing Accuracy Data
+
+Another way to inspect the data is to visualize it. We are going to use a very useful library from R called the 'ggplot' to achieve this.
+
+The ggplot package in R is a powerful plotting tool. It's easy to use and allows you to make complex plots with rather simple syntax.
+
+"gg" stands for graphical grammar.
+
+Let's start by loading the packages (or installing them first if you don't have them installed already):
+
+```{r}
+#install.packages('ggplot2')
+#install.packages('tidyr')
+#install.packages('dplyr')
+
+library(ggplot2) 
+library(tidyr)
+library(dplyr)
+```
+
+Plotting using 'ggplot' is based on adding layers. The first layer provides the code for the X and Y coordinates and determines the source of data for these coordinates. This layer is called the 'aes' layer.
+
+The next step is to add the type of plot we want to display. We have different options, however, here we want to create a bar plot. To do this, we are going to add a bar plot layer using the "geom_bar" syntax. There are many other "geom" options which can be used based on your data and what you want to display (e.g. geom_point creates a scatterplot).
+
+Remember, we use '+' to connect lines of code in R that need to be run as one code.
+
+```{r}
+# Step 1: Convert the contingency table to a data frame
+# Converting to a data frame makes it easier to work with the data in ggplot2.
+# After conversion, we can access the table counts as individual rows.
+
+contingency_df <- as.data.frame(contingency_table)
+colnames(contingency_df) <- c("NGS_Final_Mutation", "PCR_Explore_Final", "Count")
+
+# Step 2: Plot the data
+# We use ggplot2 to create a bar plot, setting 'NGS_Final_Mutation' on the x-axis
+# and the 'Count' on the y-axis. 'fill = PCR_Explore_Final' makes different bars for each
+# "PCR_Explore_Final" category, allowing for comparison between categories within each NGS category.
+
+ggplot(contingency_df, aes(x = NGS_Final_Mutation, y = Count, fill = PCR_Explore_Final)) +
+  
+# Step 3: Create the bars
+  # 'stat = "identity"' makes ggplot2 use the actual 'Count' values rather than counting occurrences.
+  
+  geom_bar(stat = "identity")
+
+```
+
+We can add layers to the plot to include labels and make it more visually pleasing. Let's try this again:
+
+```{r}
+# Step 2: Plot the data
+# We use ggplot2 to create a bar plot, setting 'NGS_Final_Mutation' on the x-axis
+# and the 'Count' on the y-axis. 'fill = PCR_Explore_Final' makes different bars for each
+# "PCR_Explore_Final" category, allowing for comparison between categories within each NGS category.
+
+ggplot(contingency_df, aes(x = NGS_Final_Mutation, y = Count, fill = PCR_Explore_Final)) +
+  
+# Step 3: Create the bars
+  # 'stat = "identity"' makes ggplot2 use the actual 'Count' values rather than counting occurrences.
+  # 'position = "dodge"' separates the bars for each category side by side.
+
+    geom_bar(stat = "identity", position = "dodge") +
+  
+# Step 4: Add titles and labels
+# This sets the title of the plot and labels for the x and y axes.
+
+    labs(title = "Contingency Table Bar Plot",
+       x = "EGFR NGS Result",
+       y = "Count") +
+    theme_minimal()+
+
+  
+# Step 5: Customize the theme
+# theme_minimal() removes extra grid lines and background color, giving a clean look.
+
+    theme(plot.title = element_text(color="red", size=14, face="bold.italic",hjust = 0.5),
+axis.title.x = element_text(color="blue", size=14, face="bold"),
+axis.title.y = element_text(color="#993333", size=14, face="bold")) +
+  
+# Step 6: Add legend label
+# 'scale_fill_discrete' gives a name to the legend, which helps viewers understand what each color represents.
+
+    scale_fill_discrete(name = "EGFR PCR Result")
+```
+
+#### Measuring Agreement
+
+We can also measure agreement between the two assays. To this we use a statistics called 'Cohen's Kappa'.
+
+Cohen's kappa is a statistical measure used to evaluate the level of agreement between two raters or two tests that classify items into mutually exclusive categories. It accounts for the possibility of agreement occurring by chance. The kappa value ranges from -1 to 1, where:
+
+-   1 indicates perfect agreement,
+
+-   0 indicates agreement no better than chance,
+
+-   Negative values indicate disagreement.
+
+Higher kappa values suggest better reliability, with commonly accepted thresholds indicating slight, fair, moderate, substantial, and almost perfect agreement. Kappa is an aggregate measure calculated from observed agreement and expected agreements.
+
+$kappa=\frac{P_o - P_e} {1 - P_e}$
+
+where:
+
+-   $P_o$ is the observed proportion of agreement between the two raters.
+-   $P_e$ is the expected proportion of agreement by chance, calculated as:
+
+$P_e= \sum_{i} (P_{A_i} \times P_{B_i})$
+
+where:
+
+-   $P_{A_i}$ is the probability that test A assigns a particular category
+-   $P_{b_i}$ is the probability that test B assigns a particular category
+
+As you can see it is rather a complex calculation. You can write this formula in R to calculate the Kappa.
+
+```{r}
+# Step 1: Calculate observed agreement (P_o)
+# P_o is the sum of the diagonal (agreements) divided by the total observations
+
+observed_agreement <- sum(diag(contingency_table)) / sum(contingency_table)
+
+# Step 2: Calculate expected agreement (P_e)
+# P_e is the sum of the product of the row and column totals for each category,
+# divided by the square of the total number of observations
+
+row_totals <- rowSums(contingency_table)
+col_totals <- colSums(contingency_table)
+total <- sum(contingency_table)
+
+expected_agreement <- sum((row_totals * col_totals) / total) / total
+
+# Step 3: Calculate Cohen's Kappa
+
+kappa <- (observed_agreement - expected_agreement) / (1 - expected_agreement)
+
+# Display the result
+
+kappa
+```
+
+This is rather cumbersome, the good news is that for most statistical tests, a package already exists that can help us. For the Kappa agreement, we can use the 'irr' package
+
+```{r}
+# Step 1: Install and load the irr package
+# (Only run install.packages("irr") if you don't already have it installed)
+
+#install.packages("irr")
+library(irr)
+
+# Step 2: Select only the two columns we want to compare
+# This step ensures that only the relevant columns are passed to kappa2
+
+agreement_data <- EGFR[, c("NGS_Final.Mutation", "PCR_Explore_Final")]
+head(agreement_data)
+
+# Step 3: Calculate Cohen's Kappa
+# kappa2 takes a data frame with two columns and computes Cohen's Kappa.
+
+kappa_result <- kappa2(agreement_data)
+
+
+# Step 4: Display the results
+
+print(kappa_result)
+
+```
+
+### Setting cutoffs for semiquantitative tests
+
+In the laboratory, semi-quantitative tests are also considered as qualitative tests for validation purposes. These semi-quantitative tests measure a quantitative value but report a categorical result based on set cutoffs (e.g. when levels of viral DNA are measured but the result is reported as positive or negative based on a set cutoff).
+
+In these tests, cut-off values must be determined that will set apart the affected from unaffected. Determining cut-off values will depend on:
+
+-   **The distribution of the values among unaffected and diseased individuals**
+-   **The desired sensitivity and specificity levels**
+
+In a perfect test, the outcome values for the affected and unaffected population will have no overlap. There is, however, always a degree of overlap between the two population making the decision of a cutoff value very important as different cutoff values will lead to different sensitivity and specificity levels.
+
+![](ROC-curve-construction-Null-Normal-condition-and-Alternative-Abnormal-condition.jpg){fig-align="center"}
+
+#### Receiver operating characteristic curve (ROC)
+
+Receiver operating characteristic curve (ROC) is the graphical illustration of true positive rate (sensitivity) as the Y-axis and false positive rate (1-specificity) as the X-axis. Consequently, the ROC curve shows the trade-off between sensitivity and specificity.
+
+The basic concept behind the ROC curve is that a test variable (test outcome) is compared with a classifier gold standard and at different cutoff values for the test variable true positive rate and false positive rate are calculated and plotted as Y-axis and X-axis respectively.
+
+ROC space is a square with X- and Y-axis range of 0 to 1. A diagonal line connects the top right corner of the space to the bottom left corner. This line is called the line of no-discrimination and depicts a complete random association of the test variable with the classifier. The perfect classification point in the ROC space (100% specificity and sensitivity) lies at the top left corner of the space.
+
+The further the ROC curve moves away from the diagonal line towards the top left corner the better the classification properties of the test variables will be.
+
+![](Risk-distributions-and-area-under-the-ROC-curve-AUC-adapted-from-Janssens-Martens-35.png){fig-align="center"}
+
+Let's look at an example. In this example, we have digital droplet PCR reads and true infection status of samples.
+
+```{r}
+DDPCR=read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/ROC Data.csv", header = TRUE)
+
+head(DDPCR)
+```
+
+Now, let's create the ROC curve. To do this, we are going to use a package called 'pROC'.
+
+```{r}
+# Install and load the pROC package for ROC analysis
+# (Only run install.packages("pROC") if you don't already have it installed)
+
+#install.packages("pROC")
+library(pROC)
+
+# Step 1: Convert GS_Infection_Status to a binary factor
+# This conversion ensures the ROC function can interpret the status correctly
+
+DDPCR$GS_Infection_Status <- ifelse(DDPCR$GS_Infection_Status == "Positive", 1, 0)
+head(DDPCR)
+
+# Step 2: Calculate and plot the ROC curve
+# Use roc() from pROC, specifying Biorad_DDPCR as the predictor and GS_Infection_Status as the true binary outcome
+
+roc_result <- roc(DDPCR$GS_Infection_Status, DDPCR$Biorad_DDPCR)
+
+# Plot ROC curve
+
+plot(roc_result, main = "ROC Curve for Biorad_DDPCR Test", col = "blue")
+
+# Display AUC
+
+auc(roc_result)
+
+```
+
+#### Determining cutoffs
+
+The area under the curve is is 0.9629 which is really good and indicates high accuracy. However, on its own, it does not provide us with the cutoff to set apart positive samples from negative samples.
+
+For determination of the cutoff value, two approaches can be undertaken. In the first approach, a decision must be made on the optimal level of sensitivity and specificity on the ROC curve and the cutoff value extracted from the table of curve coordinates which shows the corresponding test value for each curve coordinate. This manual search for the cutoff value allows for choices such as choosing a cutoff for screening (high sensitivity) or for confirmation (high specificity).
+
+The 'pROC' package can provide us this coordinates table.
+
+```{r}
+# Step 1: Create a table of sensitivity, specificity at each threshold
+# Extract sensitivity and specificity for each threshold
+roc_coords <- coords(roc_result, x = "all", ret = c("threshold", "sensitivity", "specificity"))
+
+# Display the table
+print(roc_coords)
+```
+
+Looking at the table, if we want a very sensitive assay for screening then the cutoff can perhaps be set at 0.02150 corresponding to 97.4% sensitivity and 72.4% specificity. If we want a very specific assay then the cutoff can be set at 0.19150 corresponding to 71.79% sensitivity and 100% specificity.
+
+If sensitivity and specificity are given equal weights, then a ROC curve analysis can be employed to determine the optimal cutoff value. Several methods of ROC curve analysis have been established. One of the oldest and simplest methods is called the Youden's index. This index calculated as the difference of the sum of sensitivity and specificity from 1.
+
+$Youden's\ Index =\ (Sen + Spe) - 1$
+
+We can simply calculate this:
+
+```{r}
+
+roc_coords$youden <- roc_coords$sensitivity+roc_coords$specificity-1
+head(roc_coords)
+```
+
+and visualize it:
+
+```{r}
+# Load ggplot2 library
+
+#library(ggplot2)
+
+# Replace -Inf in the 'threshold' column with 0 or another value (optional for visualization)
+roc_coords$threshold[is.infinite(roc_coords$threshold)] <- 0
+
+# Create the ggplot with x-axis limited to 1
+ggplot(data = roc_coords, aes(x = threshold, y = youden)) +
+  geom_line(color = "blue", size = 1) +      # Line for Youden Index
+  geom_point(color = "red", size = 2) +     # Points for thresholds
+  labs(title = "Threshold vs Youden Index", # Add plot title
+       x = "Threshold",                     # Label for x-axis
+       y = "Youden Index") +                # Label for y-axis
+  scale_x_continuous(limits = c(0, 0.5)) +    # Set x-axis limits from 0 to 1
+  theme_minimal()                          # Use a clean theme
+
+
+
+```
+
+However, the package has simplified the process and can provide us with this value:
+
+```{r}
+# Find the optimal cutoff using Youden's Index
+best_coords <- coords(roc_result, "best", ret = "threshold", best.method = "youden")
+
+# Display the best cutoff value
+print(paste("Best cutoff value:", best_coords))
+```
+
+### Measuring Agreement between Quantitative Assays
+
+The general approach for method comparison for quantitative tests involves either running 20-40 samples with known values or concurrently running 20-40 samples on the validated test and a gold standard test.
+
+The first steps in evaluating quantitative data is to show it's summary metrics, such as average, median, and standard deviation.
+
+```{r}
+QPCR=read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Quantitative Data2.csv", header = TRUE)
+
+head(QPCR)
+```
+
+```{r}
+# Calculate summary metrics
+metrics_qPCR1 <- c(mean = mean(QPCR$qPCR1, na.rm = TRUE),
+                   median = median(QPCR$qPCR1, na.rm = TRUE),
+                   range_min = min(QPCR$qPCR1, na.rm = TRUE),
+                   range_max = max(QPCR$qPCR1, na.rm = TRUE),
+                   sd = sd(QPCR$qPCR1, na.rm = TRUE))
+
+metrics_qPCR2 <- c(mean = mean(QPCR$qPCR2, na.rm = TRUE),
+                   median = median(QPCR$qPCR2, na.rm = TRUE),
+                   range_min = min(QPCR$qPCR2, na.rm = TRUE),
+                   range_max = max(QPCR$qPCR2, na.rm = TRUE),
+                   sd = sd(QPCR$qPCR2, na.rm = TRUE))
+
+metrics_qPCR1
+metrics_qPCR2
+```
+
+It can also help if we visualize the data. For example, let's do a boxplot.
+
+```{r}
+# Boxplot for qPCR1 and qPCR2
+boxplot(QPCR$qPCR1, QPCR$qPCR2,
+        names = c("qPCR1", "qPCR2"),
+        main = "Box Plot of qPCR1 and qPCR2",
+        ylab = "Values",
+        col = c("lightblue", "lightgreen"))
+
+```
+
+#### Linear Correlation Test
+
+The results are then compared by running a linear correlation test. These results can also be inspected visually using a comparison plot which is essentially a linear correlation plot.
+
+If the results have high linearity with a one to one agreement, then an alternative approach is to use a 'difference plot' which shows the difference of the test versus the comparison on the Y-axis and the results of comparative method on the X-axis. The difference points should scatter around 0 on the Y-axis.
+
+Let's look at an example.
+
+```{r}
+# Load data
+data <- QPCR
+
+
+# 1. Measures of Agreement
+# a) Bland-Altman Analysis
+# Calculate the differences and averages between the gold standard and test
+data$Difference <- data$qPCR2 - data$qPCR1
+data$Average <- (data$qPCR2 + data$qPCR1) / 2
+
+# Calculate mean and limits of agreement
+mean_diff <- mean(data$Difference)
+sd_diff <- sd(data$Difference)
+loa_upper <- mean_diff + 1.96 * sd_diff
+loa_lower <- mean_diff - 1.96 * sd_diff
+
+# Plot Bland-Altman
+plot(data$Average, data$Difference, main = "Bland-Altman Plot",
+     xlab = "Average of qPCR1 and Test", ylab = "Difference (Test - qPCR1)")
+abline(h = mean_diff, col = "blue") # Mean difference
+abline(h = loa_upper, col = "red", lty = 2) # Upper limit of agreement
+abline(h = loa_lower, col = "red", lty = 2) # Lower limit of agreement
+
+# b) Pearson's Correlation Coefficient
+correlation <- cor(data$qPCR1, data$qPCR2, method = "pearson")
+print(paste("Pearson's correlation coefficient:", round(correlation, 3)))
+
+# Fit a linear regression model
+model <- lm(qPCR2 ~ qPCR1, data = data) # lm() function fits a linear model of x versus y (with versus shown as ~) 
+summary(model)
+
+# 2. Plot the correlation with regression line using ggplot2
+ggplot(QPCR, aes(x = qPCR1, y = qPCR2)) +
+  geom_point() +                           # Scatter plot of qPCR1 vs Test
+  geom_smooth(method = "lm", color = "blue") +  # add another layer for the fitted line, using Linear regression (lm) to fit the line
+  labs(title = "Comparison",
+       x = "qPCR1 (Gold Standard)",
+       y = "qPCR2") +
+  theme_minimal()                          # Clean theme for better readability
+
+```
+
+Running a linear correlation on the results will also provide you with the standard deviation of the points around the fitted line, the confidence interval of the slope, the 'correlation coefficient' (also known as 'Pearson's r coefficient') as well as a p-value.
+
+A significant p-value is needed to say that there is linear correlation. In other words, a significant p-value is the first thing you should look at in the method comparison experiment which will tell you if the new test is useful for measuring the target analyte. Thus, a significant p-value is what you need for validation.
+
+The next step is to look at the correlation coefficient to determine if there is any systematic error. **Pearson's r coefficient** shows how well the compared results change together and can have values of between -1 and 1. The closer the value is to 1, the higher the correlation.
+
+The **R-squared** value is a measure of how well the **regression line fits the data**. It represents the proportion of the variance in the dependent variable that is explained by the independent variable.
+
+#### t-test for method comparison experiments
+
+The t-test should be run to determine if the mean of the two sets of results is the same or in other words t-test can determine if there is any systematic error (bias) in the mean of the two sets of values. In most method comparison experiments it is best to use a paired t-test, since the same sample is being compared using two different methods (and thus a degree of similarity of the means expected and running an unpaired t-test will fail to detect the bias). If the t-test returns a non-significant value, then there is no systematic error.
+
+If the t-test returns a significant p-value, then it shows that there is a significant bias (systematic error) in the mean of the two sets of values. If the t-test is significant, then you should go back to the linear regression equation to determine whether the source of the bias is the constant or the slope. Constant error is easily remedied by adding the constant to the new test results. However, for proportional errors 'recovery experiments' are needed.
+
+```{r}
+
+# Perform a paired t-test
+t_test_result <- t.test(data$qPCR1, data$qPCR2, paired = TRUE)
+
+# Display the results
+print(t_test_result)
+
+```
+
+As you can see, the t-test returned a significant p-value indicating that the two measurements' average are not the same. This indicates a systemic bias is not present.
+
+#### F-test for precision:
+
+'F-test' or analysis of variance compares the variance of the test method with the comparative method. In simple terms, F-test shows whether the variation observed in the test values is different from the variations observed for the comparative value. If no random error exists, you would expect the variations of the two sets of result to be similar i.e. any variation observed in the test result is caused by actual variation of the sample value rather than due to error. F-test for two variances is a simpler form of the ANOVA equation.
+
+If the p-value shows no significance then we can state that the random error in the test is not more than the random error of the comparison method, conversely, a significant p-value signifies the existence of significant random error in addition to the random error of the comparison method.
+
+An advantage of running the linear regression model in r is that it automatically calculate the F-test.
+
+```{r}
+# Fit a linear regression model
+model <- lm(qPCR2 ~ qPCR1, data = data) # lm() function fits a linear model of x versus y (with versus shown as ~) 
+summary(model)
+```
+
+## Exercises:
+
+### Exercise 1:
+
+Calculate accuracy, and create a bar plot.
+
+Load the data:
+
+```{r}
+EX_1 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Accuracy - Exercise.csv", header = TRUE)
+head(EX_1)
+```
+
+Now, create the contingency table.
+
+```{r}
+
+```
+
+Next, let's calculate the parameters
+
+```{r}
+
+```
+
+Now, we can end by visualizing our data.
+
+```{r}
+
+```
+
+### Exercise 2:
+
+Create an ROC curve, find the best cutoff using Youden's index.
+
+Load the data:
+
+```{r}
+EX_2 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/ROC Data - Exercise.csv", header = TRUE)
+head(EX_2)
+```
+
+Create the ROC curve plot. Calculate area under the curve.
+
+```{r}
+
+```
+
+Calculate the bestcutoff.
+
+```{r}
+
+```
+
+### Exercise 3:
+
+Do linear regression.
+
+Load the data:
+
+```{r}
+EX_3 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Correlation - Exercise.csv", header = TRUE)
+head(EX_3)
+```
+
+Do Pearson's correlation and fit a linear model:
+
+```{r}
+
+```
+
+Plot the linear correlation:
+
+```{r}
+
+```
+
+## Total allowable error
+
+'Total error' or 'total analytical error'(TAE) is the sum of systematic error and random error. It has been shown that total error is a more accurate measure of diagnostic error than bias (systematic error) alone. The systematic error will be calculated from a method comparison study and the random error is calculated from a replication study (which can be a part of the method comparison study). Total analytical error is then defined as:
+
+$TAE= bias +2SD$ for two-tailed estimates
+
+```{r}
+# Step 1: Calculate bias (mean difference)
+data$Difference <- data$qPCR2 - data$qPCR1
+bias <- mean(data$Difference)
+
+# Step 2: Calculate standard deviation of the difference
+sd_diff <- sd(data$Difference)
+
+# Step 3: Calculate Total Allowable Error (TAE)
+TEa <- bias + 2 * sd_diff
+
+# Display results
+print(paste("Bias:", round(bias, 3)))
+print(paste("Standard Deviation of Difference:", round(sd_diff, 3)))
+print(paste("Total Allowable Error (TAE):", round(TEa, 3)))
+```
+
+Simply stated, the measured value can be different from the true value not only by the amount of systematic error but also by random error (random error can alleviate or aggravate the bias)
+
+## Sample Size Calculation for Qualitative Tests
+
+For a qualitative test, the goal is to determine a sample size that will provide sufficient power to determine sensitivity and specificity to the desired level of confidence for the particular application.
+
+There are several approaches that can be used for sample size calculations.
+
+One formula that can be used for both quantitative and qualitative tests is based on set levels of confidence and reliability. Confidence (accuracy) is the difference between 1 and type I error rate. Reliability is the degree of precision. For this formula, the failure rate must be decided as well: i.e. how many incorrect results are we allowing for our validation process. For a failure rate of 0, the equation can be stated as:
+
+$n= \frac{ln(1 - confidence)}{ln(reliability)}$
+
+Usually the confidence level is set at 0.95 and reliability at 0.90 or 0.80 with zero failure rate which translates to a sample size of 29 and 14 respectively.
+
+For failure rates other than 0, the results follow a binomial distribution. The calculation of the sample size is based on the following equation:
+
+$1-confidence=\sum^f_i(^n_i)\times(1-reliability)^i\times reliability^{n-i}$
+
+Where $f$ is the failure rate and $n$ is the sample size.
+
+While this may sound daunting. We can easily do the calculation in R.
+
+```{r}
+sampSizeBin <- function(reliability, confidence, max_failures = 0) {
+  n <- 1
+  while (pbinom(max_failures, n, 1 - reliability) > 1 - confidence) {
+    n <- n + 1
+  }
+  return(n)
+}
+
+# Example usage:
+reliability <- 0.95
+confidence <- 0.90
+max_failures <- 1
+sample_size <- sampSizeBin(reliability, confidence, max_failures)
+print(paste("Required sample size:", sample_size))
+```
