@@ -407,7 +407,7 @@ print(paste("Best cutoff value:", best_coords))
 
 The general approach for method comparison for quantitative tests involves either running 20-40 samples with known values or concurrently running 20-40 samples on the validated test and a gold standard test.
 
-The first steps in evaluating quantitative data is to show it's summary metrics, such as average, median, and standard deviation.
+The first steps in evaluating quantitative data are to show it's summary metrics, such as average, median, and standard deviation.
 
 ```{r}
 QPCR=read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/Quantitative%Data2.csv", header = TRUE)
@@ -545,7 +545,7 @@ Calculate accuracy, and create a bar plot.
 Load the data:
 
 ```{r}
-EX_1 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Accuracy - Exercise.csv", header = TRUE)
+EX_1 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/blob/main/presentations/Accuracy%20-%20Exercise.csv", header = TRUE)
 head(EX_1)
 ```
 
@@ -574,7 +574,7 @@ Create an ROC curve, find the best cutoff using Youden's index.
 Load the data:
 
 ```{r}
-EX_2 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/ROC Data - Exercise.csv", header = TRUE)
+EX_2 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/blob/main/presentations/ROC%20Data%20-%20Exercise.csv", header = TRUE)
 head(EX_2)
 ```
 
@@ -597,7 +597,7 @@ Do linear regression.
 Load the data:
 
 ```{r}
-EX_3 <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Correlation - Exercise.csv", header = TRUE)
+EX_3 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/blob/main/presentations/Correlation%20Data%20-%20Exercise.csv", header = TRUE)
 head(EX_3)
 ```
 
