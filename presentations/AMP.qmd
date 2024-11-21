@@ -73,7 +73,7 @@ Let's look at some examples:
 
 #Read the database with the data
 
-EGFR <- read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Accuracy Data.csv", header = TRUE) #the read.csv() function requires the address of the .csv file as it's first input. header (TRUE or FALSE) determines whether the columns have a header. ## <- use the arrow to assign a value to a variable. Here the variable is a table called EGFR.
+EGFR <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/Accuracy%Data.csv", header = TRUE) #the read.csv() function requires the address of the .csv file as it's first input. header (TRUE or FALSE) determines whether the columns have a header. ## <- use the arrow to assign a value to a variable. Here the variable is a table called EGFR.
 
 #Display the top rows
 head(EGFR) #the head() function shows the top few lines of a dataframe
@@ -290,7 +290,7 @@ In a perfect test, the outcome values for the affected and unaffected population
 
 #### Receiver operating characteristic curve (ROC)
 
-Receiver operating characteristic curve (ROC) is the graphical illustration of true positive rate (sensitivity) as the Y-axis and false positive rate (1-specificity) as the X-axis. Consequently, the ROC curve shows the trade-off between sensitivity and specificity.
+Reciever operating characteristic curve (ROC) is the graphical illustration of true positive rate (sensitivity) as the Y-axis and false positive rate (1-specificity) as the X-axis. Consequently, the ROC curve shows the trade-off between sensitivity and specificity.
 
 The basic concept behind the ROC curve is that a test variable (test outcome) is compared with a classifier gold standard and at different cutoff values for the test variable true positive rate and false positive rate are calculated and plotted as Y-axis and X-axis respectively.
 
@@ -303,7 +303,7 @@ The further the ROC curve moves away from the diagonal line towards the top left
 Let's look at an example. In this example, we have digital droplet PCR reads and true infection status of samples.
 
 ```{r}
-DDPCR=read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/ROC Data.csv", header = TRUE)
+DDPCR=read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/ROC%Data.csv", header = TRUE)
 
 head(DDPCR)
 ```
@@ -340,11 +340,11 @@ auc(roc_result)
 
 #### Determining cutoffs
 
-The area under the curve is is 0.9629 which is really good and indicates high accuracy. However, on its own, it does not provide us with the cutoff to set apart positive samples from negative samples.
+The area under the curve is 0.9629 which is really good and indicates high accuracy. However, on its own, it does not provide us with the cutoff to set apart positive samples from negative samples.
 
 For determination of the cutoff value, two approaches can be undertaken. In the first approach, a decision must be made on the optimal level of sensitivity and specificity on the ROC curve and the cutoff value extracted from the table of curve coordinates which shows the corresponding test value for each curve coordinate. This manual search for the cutoff value allows for choices such as choosing a cutoff for screening (high sensitivity) or for confirmation (high specificity).
 
-The 'pROC' package can provide us this coordinates table.
+The 'pROC' package can provide us with this coordinates table.
 
 ```{r}
 # Step 1: Create a table of sensitivity, specificity at each threshold
@@ -410,7 +410,7 @@ The general approach for method comparison for quantitative tests involves eithe
 The first steps in evaluating quantitative data is to show it's summary metrics, such as average, median, and standard deviation.
 
 ```{r}
-QPCR=read.csv("C:/Users/amirm/OneDrive/Papers/AMP course/Quantitative Data2.csv", header = TRUE)
+QPCR=read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/Quantitative%Data2.csv", header = TRUE)
 
 head(QPCR)
 ```
