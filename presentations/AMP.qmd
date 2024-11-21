@@ -574,7 +574,7 @@ Create an ROC curve, find the best cutoff using Youden's index.
 Load the data:
 
 ```{r}
-EX_2 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/ROC%20Data%20-%20Exercise.csv", header = TRUE)
+EX_2 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/ROC%Data%20-%20Exercise.csv", header = TRUE)
 head(EX_2)
 ```
 
@@ -597,7 +597,7 @@ Do linear regression.
 Load the data:
 
 ```{r}
-EX_3 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/Correlation%20Data%20-%20Exercise.csv", header = TRUE)
+EX_3 <- read.csv("https://raw.githubusercontent.com/amromeo/ramp24/main/presentations/Correlation%20-%20Exercise.csv", header = TRUE)
 head(EX_3)
 ```
 
